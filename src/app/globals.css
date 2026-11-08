@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+@theme {
+  /* Vendora AI brand identity */
+  --color-brand: #39ff14; /* neon green primary */
+  --color-brand-contrast: #080d0a;
+
+  --color-background: #080d0a;      /* dark background */
+  --color-secondary-bg: #101813;    /* secondary background */
+  --color-card: #141e18;            /* cards */
+  --color-text: #f5f7f5;            /* primary text */
+  --color-muted: #9ca89f;           /* muted text */
+  --color-border: #26352b;          /* borders */
+
+  --color-success: #39ff14;
+  --color-warning: #f59e0b;
+  --color-destructive: #ef4444;
+
+  --radius: 0.75rem;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* light mode overrides applied via .dark inverted — see .light below */
+}
+
+.light {
+  --color-background: #ffffff;
+  --color-secondary-bg: #f3f6f4;
+  --color-card: #ffffff;
+  --color-text: #0f1711;
+  --color-muted: #6b7a71;
+  --color-border: #d7e3db;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(20, 30, 24, 0.6) 25%,
+    rgba(38, 53, 43, 0.6) 50%,
+    rgba(20, 30, 24, 0.6) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.4s ease infinite;
+  border-radius: var(--radius);
+}
+
+@keyframes skeleton-pulse {
+  0% {
+    background-position: 200% 0%;
+  }
+  100% {
+    background-position: -200% 0%;
+  }
+}
+
+.entry-animation {
+  animation: entry-fade 0.4s ease-out both;
+}
+
+@keyframes entry-fade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
