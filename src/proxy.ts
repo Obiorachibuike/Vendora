@@ -2,23 +2,23 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSession } from "./lib/auth";
 import { cookies } from "next/headers";
 
-/** Paths that never require a session. */
-const PUBLIC_PATHS = [
+/** Exact paths that never require a session. */
+const PUBLIC_EXACT_PATHS = new Set([
   "/",
   "/login",
   "/register",
   "/forgot-password",
   "/reset-password",
-  "/api/auth/",
-  "/api/webhooks/",
-  "/api/public/",
   "/api/health",
-  "/_next/",
   "/favicon.ico",
-];
+]);
+
+/** Path prefixes that never require a session. */
+const PUBLIC_PREFIXES = ["/api/auth/", "/api/webhooks/", "/api/public/", "/_next/"];
 
 function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p));
+  if (PUBLIC_EXACT_PATHS.has(pathname)) return true;
+  return PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
 /** After login, users with incomplete onboarding must finish it first. */
@@ -32,7 +32,7 @@ export interface SessionUser {
   onboardingComplete: boolean;
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Static / API health / public routes
@@ -75,7 +75,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  runtime: "nodejs",
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.svg$|.*\\.webp$|.*\\.ico$).*)",
   ],
