@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vendora AI
 
-## Getting Started
+AI-powered dropshipping and ecommerce automation — product research with
+transparent opportunity scoring, supplier discovery/comparison/integrations,
+landed-cost profit pricing, automated order fulfillment and analytics.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router, Turbopack) + **React 19** + **Tailwind CSS v4**
+- **Drizzle ORM** + **PostgreSQL** (migration: `src/db/migrations/0001_init.sql`)
+- **pg-boss** job queue with a standalone worker (`npm run worker`)
+- Auth: JWT sessions (`jose`) in an `httpOnly` cookie, CSRF double-submit cookie,
+  route protection via the **proxy** (`src/proxy.ts`, Next.js 16 convention)
+- Payments: Paystack, Flutterwave, Stripe (webhooks under `src/app/api/webhooks`)
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm ci --legacy-peer-deps   # note: npm ci needs --legacy-peer-deps
+cp .env.example .env.local  # then fill in the required values
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Required environment variables (see `.env.example`):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Why |
+| --- | --- |
+| `DATABASE_URL` | Postgres connection string |
+| `SESSION_SECRET` | Session JWT signing secret — **`next build` fails without it** |
+| `ENCRYPTION_KEY` | AES-256-GCM key for supplier credentials (`openssl rand -base64 32`) |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create the schema (pick one):
 
-## Learn More
+```bash
+psql "$DATABASE_URL" -f src/db/migrations/0001_init.sql
+# or
+npx drizzle-kit push
+```
 
-To learn more about Next.js, take a look at the following resources:
+Run it:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run dev      # http://localhost:3000
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`/` is the public marketing site. After registering, you complete onboarding
+(creates your organization, store and store settings in one transaction) and
+land on `/dashboard` — every `/dashboard/*` route requires an active session.
 
-## Deploy on Vercel
+## Scripts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run dev        # dev server
+npm run build      # production build (needs SESSION_SECRET)
+npm run start      # serve the production build
+npm run lint       # eslint
+npm run worker     # pg-boss worker (separate long-running process)
+npm run db:generate|db:push|db:migrate|db:studio
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deploying (Vercel)
+
+Set the env vars from `.env.example` in the project settings (at minimum
+`SESSION_SECRET`, `DATABASE_URL`, `ENCRYPTION_KEY`). `next build` fails if
+`SESSION_SECRET` is missing because the auth module throws at import time.
+
+The production database must be migrated once:
+
+```bash
+psql "$DATABASE_URL" -f src/db/migrations/0001_init.sql
+```
+
+If registration returns `{"error":"Registration failed"}` (or login
+`{"error":"Login failed"}`) in production, the database is almost always
+unreachable or unmigrated — check deployment env vars and apply the migration
+above. The web-facing error responses are intentionally opaque; the real
+reason is in the function logs (`register error …`, `login error …`,
+`onboarding error …`).
+
+## Notes
+
+- `npm ci` requires `--legacy-peer-deps` (vitest vs `@types/node` peer conflict).
+- `npm test` (vitest) is wired up but there are no test files yet.
+- The marketing landing page lives in `src/app/page.tsx` (static).
