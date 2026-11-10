@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/api";
 import { onboardingSchema } from "@/lib/validations";
 import { db } from "@/db/client";
-import { stores, storeSettings, users } from "@/db/schema";
+import { stores, storeSettings, users, organizations, organizationMembers } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,31 @@ export async function POST(req: Request) {
 
     const v = parsed.data;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return await db.transaction(async (tx: any) => {
+      // Create a personal organization for the user — stores.organization_id
+      // is a hard FK to organizations(id). Mirrors the /api/stores flow.
+      const orgSlug =
+        v.storeName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") +
+        "-" +
+        crypto.randomUUID().slice(0, 6);
+      const [org] = await tx
+        .insert(organizations)
+        .values({
+          id: crypto.randomUUID(),
+          name: v.storeName,
+          slug: orgSlug,
+          country: v.country,
+          currency: v.currency,
+        })
+        .returning();
+      await tx.insert(organizationMembers).values({
+        id: crypto.randomUUID(),
+        organizationId: org.id,
+        userId: session.user.id,
+        role: "OWNER",
+      });
+
       // Mark user onboarding complete
       await tx
         .update(users)
@@ -44,7 +68,7 @@ export async function POST(req: Request) {
           country: v.country,
           currency: v.currency,
           ownerId: session.user.id,
-          organizationId: session.user.id, // user's personal org created at registration
+          organizationId: org.id,
         })
         .returning();
 
