@@ -3,6 +3,7 @@ import { authenticateRequest, assertCsrfAsync } from "@/lib/api";
 import { db } from "@/db/client";
 import { stores } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { userMessage } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export async function GET(req: Request) {
     if (!s) return NextResponse.json({ error: "Store not found" }, { status: 404 });
     return NextResponse.json({ store: s });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Failed to load store" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Failed to load store") }, { status: 500 });
   }
 }
 
@@ -43,6 +44,6 @@ export async function PATCH(req: Request) {
     if (!store) return NextResponse.json({ error: "Store not found" }, { status: 404 });
     return NextResponse.json({ store });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Update store failed" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Update store failed") }, { status: 500 });
   }
 }

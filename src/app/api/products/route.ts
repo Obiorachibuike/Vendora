@@ -4,6 +4,7 @@ import { db } from "@/db/client";
 import { products } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { productCreateSchema } from "@/lib/validations";
+import { zodErrorMessage, userMessage } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ products: rows });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Failed to load products" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Failed to load products") }, { status: 500 });
   }
 }
 
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const parsed = productCreateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
+      return NextResponse.json({ error: zodErrorMessage(parsed.error) }, { status: 400 });
     }
 
     const v = parsed.data;
@@ -69,6 +70,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ product: row }, { status: 201 });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Create product failed" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Create product failed") }, { status: 500 });
   }
 }

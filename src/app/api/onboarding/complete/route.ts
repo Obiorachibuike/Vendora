@@ -4,6 +4,7 @@ import { onboardingSchema } from "@/lib/validations";
 import { db } from "@/db/client";
 import { stores, storeSettings, users, organizations, organizationMembers } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { zodErrorMessage, userMessage } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export async function POST(req: Request) {
     const parsed = onboardingSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: parsed.error.flatten().fieldErrors },
+        { error: zodErrorMessage(parsed.error) },
         { status: 400 },
       );
     }
@@ -84,7 +85,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ store: { id: store.id, slug: store.name } });
     });
   } catch (err) {
+    const message = userMessage(
+      err,
+      "Onboarding failed — something went wrong on our end. Please try again.",
+    );
     console.error("onboarding error", err);
-    return NextResponse.json({ error: "Onboarding failed" }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { authenticateRequest } from "@/lib/api";
 import { db } from "@/db/client";
 import { orders, payments, refunds, orderItems } from "@/db/schema";
 import { eq, sum, avg, count, and } from "drizzle-orm";
+import { userMessage } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +62,6 @@ export async function GET(req: Request) {
       note: "All metrics calculated from actual persisted transaction data.",
     });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Analytics failed" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Analytics failed") }, { status: 500 });
   }
 }

@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Store, Plus, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
+import { readError, networkError } from "@/lib/http";
 
 export default function StoresPage() {
   const user = useUser();
@@ -26,11 +28,14 @@ export default function StoresPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/stores");
-      if (!res.ok) return;
+      if (!res.ok) {
+        toast.error(await readError(res, "Couldn't load stores"));
+        return;
+      }
       const data = await res.json();
       setStores(data.stores ?? []);
     } catch {
-      // ignore
+      toast.error(networkError);
     } finally {
       setLoading(false);
     }
@@ -45,15 +50,15 @@ export default function StoresPage() {
         body: JSON.stringify({ name, slug, country, currency }),
       });
       if (!res.ok) {
-        const data = await res.json();
-        alert(data.error ?? "Create store failed");
+        toast.error(await readError(res, "Create store failed"));
         return;
       }
+      toast.success("Store created.");
       await loadStores();
       setName("");
       setSlug("");
     } catch {
-      alert("Create store failed");
+      toast.error(networkError);
     }
   };
 

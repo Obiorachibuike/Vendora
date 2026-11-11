@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatMoney } from "@/lib/utils";
 import { ShoppingBag, Truck, AlertTriangle, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
+import { readError, networkError } from "@/lib/http";
 
 export default function OrdersPage() {
   const user = useUser();
@@ -22,11 +24,14 @@ export default function OrdersPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/orders?storeId=default");
-      if (!res.ok) return;
+      if (!res.ok) {
+        toast.error(await readError(res, "Couldn't load orders"));
+        return;
+      }
       const data = await res.json();
       setOrders(data.orders ?? []);
     } catch {
-      // ignore
+      toast.error(networkError);
     } finally {
       setLoading(false);
     }
@@ -39,14 +44,14 @@ export default function OrdersPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId: id }),
       });
-      const data = await res.json();
       if (res.ok) {
+        toast.success("Order sent to supplier for fulfillment.");
         await loadOrders();
       } else {
-        alert(data.error ?? "Fulfillment failed");
+        toast.error(await readError(res, "Fulfillment failed"));
       }
     } catch {
-      alert("Fulfillment failed");
+      toast.error(networkError);
     }
   };
 
@@ -57,9 +62,14 @@ export default function OrdersPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ supplierOrderId }),
       });
-      if (res.ok) await loadOrders();
+      if (res.ok) {
+        toast.success("Retry queued for the supplier order.");
+        await loadOrders();
+      } else {
+        toast.error(await readError(res, "Retry failed"));
+      }
     } catch {
-      // ignore
+      toast.error(networkError);
     }
   };
 

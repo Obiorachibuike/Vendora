@@ -4,6 +4,7 @@ import { db } from "@/db/client";
 import { orders, supplierOrders, suppliers, fulfillments } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { orderFulfillSchema } from "@/lib/validations";
+import { zodErrorMessage, userMessage } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const parsed = orderFulfillSchema.safeParse({ orderId, ...body });
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
+      return NextResponse.json({ error: zodErrorMessage(parsed.error) }, { status: 400 });
     }
 
     const { orderId: oid, supplierId: overrideSupplierId } = parsed.data;
@@ -117,6 +118,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ supplierOrder, order: { id: oid, status: "AWAITING_SUPPLIER_CONFIRMATION" } });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Fulfillment failed" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Fulfillment failed") }, { status: 500 });
   }
 }

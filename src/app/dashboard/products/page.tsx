@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { formatMoney } from "@/lib/utils";
 import { Package, Plus, AlertTriangle, Truck } from "lucide-react";
+import { toast } from "sonner";
+import { readError, networkError } from "@/lib/http";
 
 export default function ProductsPage() {
   const user = useUser();
@@ -23,11 +25,14 @@ export default function ProductsPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/products?storeId=default");
-      if (!res.ok) return;
+      if (!res.ok) {
+        toast.error(await readError(res, "Couldn't load products"));
+        return;
+      }
       const data = await res.json();
       setProducts(data.products ?? []);
     } catch {
-      // ignore
+      toast.error(networkError);
     } finally {
       setLoading(false);
     }

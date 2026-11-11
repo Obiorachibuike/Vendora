@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/ui";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const NAV = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboardIcon },
@@ -122,9 +123,11 @@ export function Sidebar({ user }: SidebarProps) {
 
   const handleLogout = async () => {
     try {
-      await fetch("/auth/logout", { method: "POST" });
+      const res = await fetch("/api/auth/logout", { method: "POST" });
+      if (res.ok) toast.success("Signed out.");
+      else toast.error("Couldn't sign out cleanly — redirecting anyway.");
     } catch {
-      // ignore
+      toast.error("Network error — signing out locally.");
     }
     window.location.href = "/login";
   };

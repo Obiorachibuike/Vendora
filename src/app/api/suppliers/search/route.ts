@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/api";
 import { supplierSearchSchema } from "@/lib/validations";
 import { supplierRegistry } from "@/lib/suppliers/registry";
+import { zodErrorMessage, userMessage } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const parsed = supplierSearchSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
+      return NextResponse.json({ error: zodErrorMessage(parsed.error) }, { status: 400 });
     }
 
     const { keyword, country, minMargin, maxPrice, limit = 20, offset = 0 } = parsed.data;
@@ -56,6 +57,6 @@ export async function POST(req: Request) {
       note: "Until supplier credentials are connected and verified, discovery returns empty results. No supplier data is fabricated.",
     });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Supplier search failed" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Supplier search failed") }, { status: 500 });
   }
 }

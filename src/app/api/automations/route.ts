@@ -3,6 +3,7 @@ import { authenticateRequest, assertCsrfAsync } from "@/lib/api";
 import { db } from "@/db/client";
 import { automationRules } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { userMessage } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ export async function GET(req: Request) {
       .where(eq(automationRules.storeId, storeId));
     return NextResponse.json({ automations: rows });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Failed to load automations" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Failed to load automations") }, { status: 500 });
   }
 }
 
@@ -43,6 +44,6 @@ export async function POST(req: Request) {
       .returning();
     return NextResponse.json({ automation: row }, { status: 201 });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Create automation failed" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Create automation failed") }, { status: 500 });
   }
 }

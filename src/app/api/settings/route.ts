@@ -3,6 +3,7 @@ import { authenticateRequest, assertCsrfAsync } from "@/lib/api";
 import { db } from "@/db/client";
 import { storeSettings } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { userMessage } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export async function GET(req: Request) {
     }
     return NextResponse.json({ settings });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Failed to load settings" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Failed to load settings") }, { status: 500 });
   }
 }
 
@@ -43,6 +44,6 @@ export async function PATCH(req: Request) {
     if (!settings) return NextResponse.json({ error: "Store settings not found" }, { status: 404 });
     return NextResponse.json({ settings });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Update settings failed" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Update settings failed") }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { authenticateRequest } from "@/lib/api";
 import { db } from "@/db/client";
 import { backgroundJobRecords } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { userMessage } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,6 @@ export async function GET(req: Request) {
     }
     return NextResponse.json({ job });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Failed to load job" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Failed to load job") }, { status: 500 });
   }
 }

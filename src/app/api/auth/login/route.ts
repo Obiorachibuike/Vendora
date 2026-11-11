@@ -5,6 +5,7 @@ import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { verifyPassword, createSession } from "@/lib/auth";
+import { userMessage } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +53,11 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ user: { id: user.id, email: user.email, name: user.name } });
   } catch (err) {
+    const message = userMessage(
+      err,
+      "Login failed — something went wrong on our end. Please try again.",
+    );
     console.error("login error", err);
-    return NextResponse.json({ error: "Login failed" }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

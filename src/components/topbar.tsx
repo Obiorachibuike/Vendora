@@ -10,6 +10,7 @@ import {
   Layout,
 } from "lucide-react";
 import { cn } from "@/ui";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -43,9 +44,11 @@ export function Topbar({ user }: { user: { name?: string | null; email: string; 
 
   const handleLogout = async () => {
     try {
-      await fetch("/auth/logout", { method: "POST" });
+      const res = await fetch("/api/auth/logout", { method: "POST" });
+      if (res.ok) toast.success("Signed out.");
+      else toast.error("Couldn't sign out cleanly — redirecting anyway.");
     } catch {
-      // ignore
+      toast.error("Network error — signing out locally.");
     }
     router.push("/login");
   };

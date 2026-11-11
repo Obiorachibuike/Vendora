@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Settings, Shield, CreditCard, BarChart3, Bot, Bell } from "lucide-react";
+import { toast } from "sonner";
+import { readError, networkError } from "@/lib/http";
 
 const tabs = [
   { name: "Profile", href: "#profile", icon: Shield },
@@ -83,13 +85,16 @@ function StoreSettings({ user }: { user: any }) {
   const loadSettings = async () => {
     try {
       const res = await fetch("/api/settings?storeId=default");
-      if (!res.ok) return;
+      if (!res.ok) {
+        toast.error(await readError(res, "Couldn't load settings"));
+        return;
+      }
       const data = await res.json();
       setSettings(data.settings);
       setMinMargin(String(data.settings?.minProfitMargin ?? 0.2));
       setMarkupValue(String(data.settings?.defaultMarkupValue ?? 50));
     } catch {
-      // ignore
+      toast.error(networkError);
     }
   };
 
@@ -97,7 +102,7 @@ function StoreSettings({ user }: { user: any }) {
     e.preventDefault();
     setLoading(true);
     try {
-      await fetch("/api/settings", {
+      const res = await fetch("/api/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -106,9 +111,13 @@ function StoreSettings({ user }: { user: any }) {
           defaultMarkupValue: parseFloat(markupValue),
         }),
       });
-      alert("Settings saved");
+      if (!res.ok) {
+        toast.error(await readError(res, "Save failed"));
+        return;
+      }
+      toast.success("Settings saved.");
     } catch {
-      alert("Save failed");
+      toast.error(networkError);
     } finally {
       setLoading(false);
     }
