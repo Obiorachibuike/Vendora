@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatMoney } from "@/lib/utils";
 import { DollarSign, ShoppingCart, AlertTriangle, TrendingUp, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
+import { readError, networkError } from "@/lib/http";
 
 export default function AnalyticsPage() {
   const user = useUser();
@@ -22,11 +24,14 @@ export default function AnalyticsPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/analytics/overview?storeId=default");
-      if (!res.ok) return;
+      if (!res.ok) {
+        toast.error(await readError(res, "Couldn't load analytics"));
+        return;
+      }
       const data = await res.json();
       setMetrics(data);
     } catch {
-      // ignore
+      toast.error(networkError);
     } finally {
       setLoading(false);
     }

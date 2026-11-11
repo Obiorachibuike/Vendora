@@ -12,7 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
+import { readError, networkError } from "@/lib/http";
 
 const SUPPLIERS = ["CJdropshipping", "AliExpress", "Alibaba", "Zendrop", "Spocket"];
 const CATEGORIES = ["Fashion", "Electronics", "Home & Living", "Beauty", "Baby", "Fitness"];
@@ -21,7 +22,6 @@ type FormValues = z.infer<typeof onboardingSchema>;
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const form = useForm<FormValues>({
@@ -43,7 +43,6 @@ export default function OnboardingPage() {
   });
 
   const onSubmit = async (values: unknown) => {
-    setError(null);
     setSubmitting(true);
     try {
       const data = values as FormValues;
@@ -52,15 +51,15 @@ export default function OnboardingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      const json = await res.json();
       if (!res.ok) {
-        setError(json.error ?? "Onboarding failed");
+        toast.error(await readError(res, "Onboarding failed"));
         setSubmitting(false);
         return;
       }
+      toast.success("Your store is ready — welcome to Vendora AI!");
       router.push("/dashboard");
     } catch {
-      setError("Unexpected error. Please try again.");
+      toast.error(networkError);
       setSubmitting(false);
     }
   };
@@ -86,11 +85,6 @@ export default function OnboardingPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {error && (
-            <div className="mb-4 p-3 rounded-lg border border-destructive/30 bg-destructive/10 text-sm text-destructive flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4" /> {error}
-            </div>
-          )}
           <form onSubmit={form.handleSubmit(onSubmit as (v: unknown) => void)} className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

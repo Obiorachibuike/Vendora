@@ -3,6 +3,7 @@ import { authenticateRequest } from "@/lib/api";
 import { db } from "@/db/client";
 import { payments, orders } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { userMessage } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,6 @@ export async function GET(req: Request) {
     const rows = await q;
     return NextResponse.json({ payments: rows });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Failed to load payments" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Failed to load payments") }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { registerSchema } from "@/lib/validations";
+import { zodErrorMessage, userMessage } from "@/lib/api-error";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -14,7 +15,7 @@ export async function POST(req: Request) {
     const parsed = registerSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: parsed.error.flatten().fieldErrors },
+        { error: zodErrorMessage(parsed.error) },
         { status: 400 },
       );
     }
@@ -73,7 +74,11 @@ export async function POST(req: Request) {
       user: { id: user.id, email: user.email, name: user.name },
     });
   } catch (err) {
+    const message = userMessage(
+      err,
+      "Registration failed — something went wrong on our end. Please try again.",
+    );
     console.error("register error", err);
-    return NextResponse.json({ error: "Registration failed" }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { authenticateRequest, assertCsrfAsync } from "@/lib/api";
 import { db } from "@/db/client";
 import { pricingRules } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { userMessage } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ export async function GET(req: Request) {
     const rows = await db.select().from(pricingRules).where(eq(pricingRules.storeId, storeId));
     return NextResponse.json({ rules: rows });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Failed to load pricing rules" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Failed to load pricing rules") }, { status: 500 });
   }
 }
 
@@ -39,6 +40,6 @@ export async function POST(req: Request) {
     }).returning();
     return NextResponse.json({ rule }, { status: 201 });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Create pricing rule failed" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Create pricing rule failed") }, { status: 500 });
   }
 }

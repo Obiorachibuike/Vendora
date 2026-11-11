@@ -4,6 +4,7 @@ import { createAIProvider } from "@/lib/ai/provider";
 import { aiUsage } from "@/db/schema";
 import { db } from "@/db/client";
 import { eq } from "drizzle-orm";
+import { userMessage } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ result });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "AI chat failed" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "AI chat failed") }, { status: 500 });
   }
 }

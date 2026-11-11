@@ -6,6 +6,7 @@ import { suppliers, supplierConnections, supplierCredentials, auditLogs } from "
 import { eq } from "drizzle-orm";
 import { supplierRegistry } from "@/lib/suppliers/registry";
 import { encryptString } from "@/lib/encryption";
+import { zodErrorMessage, userMessage } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const parsed = supplierConnectSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
+      return NextResponse.json({ error: zodErrorMessage(parsed.error) }, { status: 400 });
     }
 
     const { supplierId } = parsed.data;
@@ -97,6 +98,6 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Connect failed" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Connect failed") }, { status: 500 });
   }
 }

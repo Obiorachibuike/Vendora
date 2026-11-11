@@ -4,6 +4,7 @@ import { db } from "@/db/client";
 import { orders, orderItems, customers } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { orderCreateSchema } from "@/lib/validations";
+import { zodErrorMessage, userMessage } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +28,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ orders: rows });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Failed to load orders" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Failed to load orders") }, { status: 500 });
   }
 }
 
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const parsed = orderCreateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
+      return NextResponse.json({ error: zodErrorMessage(parsed.error) }, { status: 400 });
     }
 
     const { customerId, currency, customerNote, idempotencyKey } = parsed.data;
@@ -98,6 +99,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ order }, { status: 201 });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Create order failed" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Create order failed") }, { status: 500 });
   }
 }

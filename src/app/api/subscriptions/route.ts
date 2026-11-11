@@ -3,6 +3,7 @@ import { authenticateRequest } from "@/lib/api";
 import { db } from "@/db/client";
 import { subscriptions } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { userMessage } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,6 @@ export async function GET(req: Request) {
       .where(eq(subscriptions.storeId, storeId));
     return NextResponse.json({ subscriptions: rows });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Failed to load subscriptions" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Failed to load subscriptions") }, { status: 500 });
   }
 }

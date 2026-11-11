@@ -5,6 +5,7 @@ import { productResearch, productOpportunities } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { productResearchSchema } from "@/lib/validations";
 import { scoreOpportunity, buildEvidence } from "@/lib/research";
+import { zodErrorMessage, userMessage } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const parsed = productResearchSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
+      return NextResponse.json({ error: zodErrorMessage(parsed.error) }, { status: 400 });
     }
 
     const { keyword, category, country } = parsed.data;
@@ -84,7 +85,7 @@ export async function POST(req: Request) {
       note: "Scores are transparent and evidence-based. No sales figures are fabricated.",
     });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Research failed" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Research failed") }, { status: 500 });
   }
 }
 
@@ -107,6 +108,6 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ research: rows });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Failed to load research" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Failed to load research") }, { status: 500 });
   }
 }

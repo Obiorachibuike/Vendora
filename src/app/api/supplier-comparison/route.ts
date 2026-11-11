@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/api";
 import { selectSupplier, DEFAULT_SELECTION_CONFIG } from "@/lib/supplier-selection";
+import { userMessage } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,6 @@ export async function POST(req: Request) {
       note: "Supplier selection uses deterministic structured scoring, not arbitrary AI guesses.",
     });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Supplier comparison failed" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Supplier comparison failed") }, { status: 500 });
   }
 }

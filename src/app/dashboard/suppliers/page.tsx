@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { formatMoney } from "@/lib/utils";
 import { Package, AlertTriangle, CheckCircle2, Link, BarChart3 } from "lucide-react";
+import { toast } from "sonner";
+import { readError, networkError } from "@/lib/http";
 
 export default function SuppliersPage() {
   const user = useUser();
@@ -28,11 +30,15 @@ export default function SuppliersPage() {
         fetch("/api/suppliers"),
         fetch("/api/suppliers?storeId=default"),
       ]);
+      if (!sRes.ok) {
+        toast.error(await readError(sRes, "Couldn't load suppliers"));
+        return;
+      }
       const sData = await sRes.json();
       setSuppliers(sData.suppliers ?? []);
       setConnections(sData.suppliers ?? []);
     } catch {
-      // ignore
+      toast.error(networkError);
     } finally {
       setLoading(false);
     }
@@ -45,14 +51,14 @@ export default function SuppliersPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ supplierId: id }),
       });
-      const data = await res.json();
       if (res.ok) {
+        toast.success("Supplier connected.");
         await loadSuppliers();
       } else {
-        alert(data.error ?? "Connect failed");
+        toast.error(await readError(res, "Connect failed"));
       }
     } catch {
-      alert("Connect failed");
+      toast.error(networkError);
     }
   };
 
@@ -170,18 +176,26 @@ export default function SuppliersPage() {
               />
               <Button
                 onClick={async () => {
+                  if (!search.trim()) {
+                    toast.error("Enter a keyword to search.");
+                    return;
+                  }
                   try {
                     const res = await fetch("/api/suppliers/search", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ keyword: search }),
                     });
+                    if (!res.ok) {
+                      toast.error(await readError(res, "Search failed"));
+                      return;
+                    }
                     const data = await res.json();
-                    alert(
+                    toast.info(
                       data.note ?? `Found ${data.total ?? 0} products (${data.results?.length ?? 0} shown).`,
                     );
                   } catch {
-                    alert("Search failed");
+                    toast.error(networkError);
                   }
                 }}
               >

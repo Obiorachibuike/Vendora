@@ -13,6 +13,7 @@ import {
 } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { calculatePrice } from "@/lib/pricing";
+import { zodErrorMessage, userMessage } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const parsed = productImportSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
+      return NextResponse.json({ error: zodErrorMessage(parsed.error) }, { status: 400 });
     }
 
     const { supplierOfferId, storeId, variantId, title, basePrice, autoPublish } = parsed.data;
@@ -94,6 +95,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ product, pricing }, { status: 201 });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Import failed" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Import failed") }, { status: 500 });
   }
 }

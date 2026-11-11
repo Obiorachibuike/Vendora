@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatMoney } from "@/lib/utils";
 import { Search, AlertTriangle, TrendingUp } from "lucide-react";
+import { toast } from "sonner";
+import { readError, networkError } from "@/lib/http";
 
 export default function ResearchPage() {
   const user = useUser();
@@ -16,25 +18,35 @@ export default function ResearchPage() {
   const [country, setCountry] = useState("NG");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const storeId = null; // set after store selection
 
   const runResearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!keyword.trim()) return;
+    if (!keyword.trim()) {
+      toast.error("Enter a keyword to research.");
+      return;
+    }
     setLoading(true);
-    setError(null);
     try {
       const res = await fetch(
         `/api/research/products?keyword=${encodeURIComponent(keyword)}&category=${encodeURIComponent(category)}&country=${encodeURIComponent(country)}`,
         { method: "POST" },
       );
-      if (!res.ok) throw new Error("Research request failed");
+      if (!res.ok) {
+        toast.error(await readError(res, "Research failed"));
+        return;
+      }
       const data = await res.json();
-      setResults(data.opportunity ? [data.opportunity] : []);
-    } catch (err: any) {
-      setError(err?.message ?? "Research failed");
+      const opp = data.opportunity ? [data.opportunity] : [];
+      setResults(opp);
+      if (opp.length > 0) {
+        toast.success("Research complete — opportunity found.");
+      } else {
+        toast.info("Research complete — no strong opportunity found for that keyword.");
+      }
+    } catch {
+      toast.error(networkError);
     } finally {
       setLoading(false);
     }
@@ -115,12 +127,6 @@ export default function ResearchPage() {
               {loading ? "Researching…" : "Run research"}
             </Button>
           </form>
-
-          {error && (
-            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-              {error}
-            </div>
-          )}
 
           {results.length > 0 && (
             <div className="pt-4 border-t border-border">

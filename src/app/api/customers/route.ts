@@ -3,6 +3,7 @@ import { authenticateRequest, assertCsrfAsync } from "@/lib/api";
 import { db } from "@/db/client";
 import { customers } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { userMessage } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export async function GET(req: Request) {
       .orderBy(desc(customers.createdAt));
     return NextResponse.json({ customers: rows });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Failed to load customers" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Failed to load customers") }, { status: 500 });
   }
 }
 
@@ -38,6 +39,6 @@ export async function POST(req: Request) {
       .returning();
     return NextResponse.json({ customer }, { status: 201 });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Create customer failed" }, { status: 500 });
+    return NextResponse.json({ error: userMessage(err, "Create customer failed") }, { status: 500 });
   }
 }
