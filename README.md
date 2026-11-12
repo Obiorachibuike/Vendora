@@ -69,12 +69,23 @@ The production database must be migrated once:
 psql "$DATABASE_URL" -f src/db/migrations/0001_init.sql
 ```
 
-If registration returns `{"error":"Registration failed"}` (or login
-`{"error":"Login failed"}`) in production, the database is almost always
-unreachable or unmigrated — check deployment env vars and apply the migration
-above. The web-facing error responses are intentionally opaque; the real
-reason is in the function logs (`register error …`, `login error …`,
-`onboarding error …`).
+If registration or login fails in production, open `/api/health` first:
+
+| `status` | Meaning |
+| --- | --- |
+| `ok` | Database reachable, `users`/`sessions`/`audit_logs` present |
+| `db_unavailable` | Cannot connect (env vars, networking, TLS, pool exhaustion) |
+| `schema_missing` | Connected, but the migration has **not** been applied — run the `psql` above |
+| `schema_unknown` | Connected, but the schema probe failed (permissions) |
+
+API error responses are intentionally generic for unexpected internals, but
+known failure modes are classified and reported honestly (unreachable DB,
+schema out of date, duplicate record, bad credentials). The classifier
+(`src/lib/api-error.ts`) unwraps drizzle-orm's `DrizzleQueryError.cause`
+chain, so the Postgres SQLSTATE / socket code of the underlying driver error
+is always what gets classified. The raw error (including `query` and
+`params`) is logged server-side as `register error …`, `login error …`,
+`onboarding error …`.
 
 ## Notes
 
