@@ -45,7 +45,17 @@ export async function proxy(request: NextRequest) {
 
   let session;
   if (token) {
-    session = await getSession(token);
+    try {
+      session = await getSession(token);
+    } catch (err) {
+      // Session validation hit a server-side failure (e.g. DB unreachable).
+      // Treat as unauthenticated and send the user to login instead of
+      // rendering a bare "Internal Server Error" page.
+      console.error("proxy getSession error", err);
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
   // No valid session → login
