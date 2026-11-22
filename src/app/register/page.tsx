@@ -33,8 +33,8 @@ export default function RegisterPage() {
         toast.error(await readError(res, "Registration failed"));
         return;
       }
-      toast.success("Account created! Please sign in.");
-      router.push("/login?registered=1");
+      toast.success("Account created! Let's set up your store.");
+      router.push("/onboarding");
     } catch {
       toast.error(networkError);
     }
@@ -142,7 +142,7 @@ export default function RegisterPage() {
                 id="terms"
                 type="checkbox"
                 className="h-4 w-4 shrink-0 rounded border-brand text-brand-contrast focus:ring-brand mt-0.5"
-                {...form.register("acceptTerms", { value: true, setValueAs: () => true })}
+                {...form.register("acceptTerms")}
               />
               <Label htmlFor="terms" className="text-sm text-muted-text leading-none">
                 I accept the Terms of Service and Privacy Policy
